@@ -10,19 +10,9 @@ import { useContext , useState} from 'react';
 import { TodosContext } from './TodosContext.js';
 
 
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-
-
-export default function ToDo({todo}){
-    const [showDeleteAlert,setShowDeleteAlert ]= useState(false);
-    const [showUpdateAlert,setShowUpdateAlert ]= useState(false);
-    const [updatedTodo,setUpdatedTodo] = useState({title:todo.title,details:todo.detail})
+export default function ToDo({todo,showDeleteDialog,showEditDialog}){
+    
+    
 
     const {todos,setTodos}=useContext(TodosContext);
     function handleCheckClick(){
@@ -35,112 +25,23 @@ export default function ToDo({todo}){
         setTodos(UpdateTodos);
         localStorage.tasks = JSON.stringify(UpdateTodos) ;
     }
-    function deleteTask(){
-        const UpdateTodos = todos.filter((t)=>{
-            return t.id != todo.id
-        })
-        setTodos(UpdateTodos);
-        localStorage.tasks = JSON.stringify(UpdateTodos) ; 
-    }
+    
+    
     
     function handleDeleteClick(){
-        setShowDeleteAlert(true);
-    }
-    function handleDeleteDialogClose(){
-        setShowDeleteAlert(false);
+        showDeleteDialog(todo);
 
     }
-    function handleEditDialogClose(){
-        setShowUpdateAlert(false);
-    }
     function handleEditClick(){
-        setShowUpdateAlert(true);
+        showEditDialog(todo);
     }
-    function EditTask(){
-        const UpdateTodos = todos.map((t)=>{
-            if(t.id === todo.id){
-                t.title = updatedTodo.title;
-                t.detail = updatedTodo.details;
-            }
-            return t
-        })
-        setTodos(UpdateTodos); 
-        localStorage.tasks = JSON.stringify(UpdateTodos) ;
-        setShowUpdateAlert(false);
-    }
-    const open = showDeleteAlert;
-    const openEdit = showUpdateAlert;
+    
+
     return(
         <>
         
-         <Dialog
-        open={open}
-        onClose={handleDeleteDialogClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Are you sure you want to delete the task?"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Once deleted, this action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteDialogClose}>Cancel</Button>
-          <Button  autoFocus onClick={deleteTask}>
-            Delete
-          </Button>
-        </DialogActions>
-         </Dialog>
-         <Dialog
-        open={openEdit}
-        onClose={handleEditDialogClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Edit the task"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            <TextField
-              autoFocus
-              required
-              margin="dense"
-              id="name"
-              name="email"
-              label="task title"
-              value={updatedTodo.title}
-              onChange={(e)=>{setUpdatedTodo({...updatedTodo,title:e.target.value})}}
-              type="email"
-              fullWidth
-              variant="standard"
-            />
-            <TextField
-              autoFocus
-              required
-              margin="dense"
-              id="name"
-              name="email"
-              label="Task details"
-              value={updatedTodo.details}
-              onChange={(e)=>{setUpdatedTodo({...updatedTodo,details:e.target.value})}}
-
-              type="email"
-              fullWidth
-              variant="standard"
-            />
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleEditDialogClose}>Cancel</Button>
-          <Button  autoFocus onClick={EditTask}>
-            Confirm
-          </Button>
-        </DialogActions>
-         </Dialog>
+         
+         
         <Card 
         className="ToDoCard"
         sx={{ minWidth: 200 , backgroundColor:"#283593" , color:"white", marginTop:"10px" }}>

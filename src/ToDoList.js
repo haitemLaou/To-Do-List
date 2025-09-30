@@ -7,15 +7,21 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect , useMemo} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 
-import { TodosContext } from './TodosContext.js';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+
+
 
 import ToDo from './ToDo.js';
-import { justifyContent } from '@mui/system';
-
+import { TodosContext } from './TodosContext.js';
+import { ToastContext } from './ToastContext.js';
 
 
 
@@ -25,13 +31,22 @@ import { justifyContent } from '@mui/system';
 export default function ToDoList() {
     const [titleInp,SettitleInp]= useState("");
     const {todos,setTodos}= useContext(TodosContext)
+    const [showDeleteAlert,setShowDeleteAlert ]= useState(false);
     const [display,setDisplay]=useState("all");
-    const completedTodos = todos.filter((t)=>{
-        return t.isCompleted
-    })
-    const notCompletedTodos = todos.filter((t)=>{
-        return !t.isCompleted
-    })
+    const [deleteTask, setDeleteTask] = useState(null);
+    const [updatedTodo,setUpdatedTodo] = useState({title:"", detail:""})
+    const [showUpdateAlert,setShowUpdateAlert ]= useState(false);
+    const {showHideToast} = useContext(ToastContext);
+    const completedTodos = useMemo(()=>{
+        return todos.filter((t)=>{
+                return t.isCompleted
+                }) 
+    },[todos])
+    const notCompletedTodos = useMemo(()=>{
+        return todos.filter((t)=>{
+                return !t.isCompleted
+                }) 
+    },[todos])
 
     let displayList = todos;
     if(display=="completed"){
@@ -43,7 +58,7 @@ export default function ToDoList() {
     }
 
     const todolist = displayList.map((t)=>{
-    return <ToDo key={t.id} todo={t} />
+    return <ToDo key={t.id} todo={t} showDeleteDialog={handleDeleteClick} showEditDialog={handleEditClick} />
     })
 
     function handleAddClick(){
@@ -58,8 +73,44 @@ export default function ToDoList() {
     setTodos(updatedTodos);
     localStorage.tasks = JSON.stringify(updatedTodos) ;
     SettitleInp("");
+    showHideToast("Added successfully");
     }
     
+    function handleDeleteClick(todo){
+        setDeleteTask(todo);
+        setShowDeleteAlert(true);
+    }
+    function handleDeleteDialogClose(){
+        setShowDeleteAlert(false);
+    }
+    function deleteTaskfunction(){
+        const UpdateTodos = todos.filter((t)=>{
+            return t.id != deleteTask.id
+        })
+        setTodos(UpdateTodos);
+        localStorage.tasks = JSON.stringify(UpdateTodos) ; 
+        setShowDeleteAlert(false);
+        showHideToast("Deleted successfully");
+    }
+    function handleEditDialogClose(){
+        setShowUpdateAlert(false);
+    }
+    function handleEditClick(todo){
+        setUpdatedTodo(todo);
+        setShowUpdateAlert(true);
+    }
+    function EditTask(){
+        const UpdateTodos = todos.map((t)=>{
+            if(t.id === updatedTodo.id){
+                return updatedTodo
+            }
+            return t
+        })
+        setTodos(UpdateTodos); 
+        localStorage.tasks = JSON.stringify(UpdateTodos) ;
+        setShowUpdateAlert(false);
+        showHideToast("Edited successfully");
+    }
             
     function handleDisplayedType(e){
         setDisplay(e.target.value)
@@ -68,11 +119,81 @@ export default function ToDoList() {
 
 
     useEffect(()=>{
-        setTodos(JSON.parse(localStorage.tasks));
+        const storageTodos = JSON.parse(localStorage.tasks) ?? []; 
+        setTodos(storageTodos);
     },[]) 
 
   return (
-      <Container maxWidth="sm" >
+    <>
+        <Dialog
+        open={showDeleteAlert}
+        onClose={handleDeleteDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Are you sure you want to delete the task?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Once deleted, this action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteDialogClose}>Cancel</Button>
+          <Button  autoFocus onClick={deleteTaskfunction}>
+            Delete
+          </Button>
+        </DialogActions>
+        </Dialog>
+        <Dialog
+        open={showUpdateAlert}
+        onClose={handleEditDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Edit the task"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            <TextField
+              autoFocus
+              required
+              margin="dense"
+              id="name"
+              name="email"
+              label="task title"
+              value={updatedTodo.title}
+              onChange={(e)=>{setUpdatedTodo({...updatedTodo,title:e.target.value})}}
+              type="email"
+              fullWidth
+              variant="standard"
+            />
+            <TextField
+              autoFocus
+              required
+              margin="dense"
+              id="name"
+              name="email"
+              label="Task details"
+              value={updatedTodo.detail}
+              onChange={(e)=>{setUpdatedTodo({...updatedTodo,detail:e.target.value})}}
+
+              type="email"
+              fullWidth
+              variant="standard"
+            />
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditDialogClose}>Cancel</Button>
+          <Button  autoFocus onClick={EditTask}>
+            Confirm
+          </Button>
+        </DialogActions>
+         </Dialog>
+        <Container maxWidth="sm" >
                 <Card sx={{ minWidth: 275 }} style={{
                     maxHeight:"80vh",
                     overflow:"auto",
@@ -120,6 +241,8 @@ export default function ToDoList() {
 
             </CardContent>
             </Card>
-      </Container>
+        </Container>
+    </>
+      
   );
 }
