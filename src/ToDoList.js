@@ -118,10 +118,10 @@ export default function ToDoList() {
     }
 
 
-    useEffect(()=>{
-        const storageTodos = JSON.parse(localStorage.tasks) ?? []; 
-        setTodos(storageTodos);
-    },[]) 
+    useEffect(() => {
+  const storageTodos = JSON.parse(localStorage.getItem("tasks") || "[]");
+  setTodos(storageTodos);
+  }, []);
 
   return (
     <>
